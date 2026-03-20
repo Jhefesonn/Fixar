@@ -1,25 +1,13 @@
 'use server';
 
-import { createClient } from '@supabase/supabase-js';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-// Cliente administrativo para o servidor (ignora RLS)
-const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
-
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { getOrganizationContext } from '@/lib/auth-context';
 
 export async function getDashboardStats(tokenOverride?: string) {
   try {
     const { organizationId } = await getOrganizationContext(tokenOverride);
-    const supabase = supabaseAdmin;
+    const supabase = getSupabaseAdmin();
 
     const now = new Date();
     const todayStr = format(now, 'yyyy-MM-dd');
