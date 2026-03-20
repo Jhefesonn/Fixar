@@ -116,6 +116,10 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     slug TEXT UNIQUE NOT NULL,
     owner_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     logo_url TEXT,
+    report_logo_url TEXT, -- Logo para orçamentos e relatórios (PDF)
+    primary_color TEXT DEFAULT '#2563eb',
+    secondary_color TEXT DEFAULT '#1e293b',
+    report_footer TEXT, -- Rodapé padrão para documentos
     cnpj TEXT,
     company_name TEXT,
     fantasy_name TEXT,
@@ -128,6 +132,7 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     city TEXT,
     state TEXT,
     notes TEXT,
+    plan TEXT DEFAULT 'free',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

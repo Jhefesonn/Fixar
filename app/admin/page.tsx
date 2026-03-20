@@ -821,13 +821,21 @@ function ProfileView() {
     state: profile?.organizations?.state || '',
     notes: profile?.organizations?.notes || '',
     plan: profile?.organizations?.plan || 'free',
+    primary_color: profile?.organizations?.primary_color || '#2563eb',
+    secondary_color: profile?.organizations?.secondary_color || '#1e293b',
+    report_footer: profile?.organizations?.report_footer || '',
   });
 
   // Logo state (Company)
   const [logoPreview, setLogoPreview] = useState<string | null>(profile?.organizations?.logo_url || null);
+  const [reportLogoPreview, setReportLogoPreview] = useState<string | null>(profile?.organizations?.report_logo_url || null);
   
-  const [isCropOpen, setIsCropOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [cropConfig, setCropConfig] = useState<{ isOpen: boolean; image: string | null; aspect: number; field: 'logo' | 'report_logo' }>({
+    isOpen: false,
+    image: null,
+    aspect: 1,
+    field: 'logo'
+  });
 
   // Sync state
   useEffect(() => {
@@ -847,8 +855,12 @@ function ProfileView() {
         state: profile.organizations?.state || '',
         notes: profile.organizations?.notes || '',
         plan: profile.organizations?.plan || 'free',
+        primary_color: profile.organizations?.primary_color || '#2563eb',
+        secondary_color: profile.organizations?.secondary_color || '#1e293b',
+        report_footer: profile.organizations?.report_footer || '',
       });
       setLogoPreview(profile.organizations?.logo_url || null);
+      setReportLogoPreview(profile.organizations?.report_logo_url || null);
     }
   }, [profile]);
 
@@ -900,20 +912,28 @@ function ProfileView() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'logo' | 'report_logo') => {
     if (e.target.files && e.target.files.length > 0) {
       const reader = new FileReader();
       reader.onload = () => {
-        setSelectedImage(reader.result as string);
-        setIsCropOpen(true);
+        setCropConfig({
+          isOpen: true,
+          image: reader.result as string,
+          aspect: field === 'logo' ? 1 : 16 / 5, // Report logo horizontal
+          field
+        });
       };
       reader.readAsDataURL(e.target.files[0]);
     }
   };
 
-  const onCropComplete = async (croppedImage: string) => {
-    setLogoPreview(croppedImage);
-    setIsCropOpen(false);
+  const onCropComplete = (croppedImage: string) => {
+    if (cropConfig.field === 'logo') {
+      setLogoPreview(croppedImage);
+    } else {
+      setReportLogoPreview(croppedImage);
+    }
+    setCropConfig(prev => ({ ...prev, isOpen: false, image: null }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -942,6 +962,10 @@ function ProfileView() {
             state: formData.state,
             notes: formData.notes,
             logo_url: logoPreview,
+            report_logo_url: reportLogoPreview,
+            primary_color: formData.primary_color,
+            secondary_color: formData.secondary_color,
+            report_footer: formData.report_footer,
             updated_at: new Date().toISOString()
           })
           .eq('id', profile.organization_id);
@@ -1049,8 +1073,67 @@ function ProfileView() {
 
             {/* Seção 3: Notas */}
             <div className="card-premium">
-               <label className={labelClass}>Observações Adicionais</label>
-               <textarea name="notes" value={formData.notes} onChange={handleInputChange} className={`${inputClass} h-32 resize-none`} placeholder="Notas internas sobre a empresa..." />
+               <label className={labelClass}>Observações Internas</label>
+               <textarea name="notes" value={formData.notes} onChange={handleInputChange} className={`${inputClass} h-20 resize-none`} placeholder="Notas sobre a empresa..." />
+            </div>
+
+            {/* Seção 4: Branding & Relatórios */}
+            <div className="card-premium space-y-6">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+                <span className="material-symbols-outlined text-primary-600">palette</span>
+                Identidade Visual & Documentos
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 {/* Logo para Relatórios */}
+                 <div className="space-y-4">
+                    <label className={labelClass}>Logo para Orçamentos/PDF (Horizontal)</label>
+                    <div className="relative group border-2 border-dashed border-slate-800 rounded-2xl p-4 bg-navy-900 flex flex-col items-center justify-center min-h-[120px] transition-colors hover:border-primary-600/50">
+                       {reportLogoPreview ? (
+                         <img src={reportLogoPreview} alt="Report Logo" className="max-h-20 w-auto object-contain" />
+                       ) : (
+                         <div className="flex flex-col items-center gap-2 text-slate-500">
+                            <span className="material-symbols-outlined text-4xl">picture_as_pdf</span>
+                            <span className="text-[10px] uppercase font-bold tracking-widest text-center">Nenhuma logo definida<br/>para documentos</span>
+                         </div>
+                       )}
+                       <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                          <span className="bg-primary-600 px-4 py-2 rounded-lg text-xs font-bold shadow-lg">Alterar Logo PDF</span>
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'report_logo')} />
+                       </label>
+                    </div>
+                    <p className="text-[10px] text-slate-500 italic px-1 leading-tight">Sugestão: PNG com fundo transparente e formato retangular.</p>
+                 </div>
+
+                 {/* Cores da Marca */}
+                 <div className="space-y-4">
+                    <label className={labelClass}>Cores da Identidade</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <div className="space-y-2 text-left">
+                          <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Primária</p>
+                          <div className="flex items-center gap-2 bg-navy-950 p-2 rounded-xl border border-slate-800">
+                            <input type="color" name="primary_color" value={formData.primary_color} onChange={handleInputChange} className="h-8 w-8 rounded-lg cursor-pointer bg-transparent border-none" />
+                            <input type="text" name="primary_color" value={formData.primary_color} onChange={handleInputChange} className="bg-transparent text-xs font-mono w-full outline-none text-white" />
+                          </div>
+                       </div>
+                       <div className="space-y-2 text-left">
+                          <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Secundária</p>
+                          <div className="flex items-center gap-2 bg-navy-950 p-2 rounded-xl border border-slate-800">
+                            <input type="color" name="secondary_color" value={formData.secondary_color} onChange={handleInputChange} className="h-8 w-8 rounded-lg cursor-pointer bg-transparent border-none" />
+                            <input type="text" name="secondary_color" value={formData.secondary_color} onChange={handleInputChange} className="bg-transparent text-xs font-mono w-full outline-none text-white" />
+                          </div>
+                       </div>
+                    </div>
+                    <div className="p-3 bg-blue-500/5 rounded-xl border border-blue-500/10">
+                       <p className="text-[10px] text-slate-400 italic">Estas cores serão aplicadas automaticamente nos cabeçalhos e detalhes de orçamentos gerados pelo sistema.</p>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="space-y-2">
+                 <label className={labelClass}>Rodapé Padrão para Orçamentos/Relatórios</label>
+                 <textarea name="report_footer" value={formData.report_footer} onChange={handleInputChange} className={`${inputClass} h-24 resize-none`} placeholder="Ex: Garantia de 90 dias em serviços | Validade do orçamento: 10 dias..." />
+              </div>
             </div>
           </div>
 
@@ -1069,7 +1152,7 @@ function ProfileView() {
                    </div>
                    <label className="absolute bottom-[-10px] right-[-10px] h-12 w-12 bg-primary-600 rounded-full flex items-center justify-center border-4 border-navy-900 cursor-pointer hover:bg-primary-700 transition-colors shadow-lg">
                      <span className="material-symbols-outlined text-white">edit</span>
-                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                     <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
                    </label>
                 </div>
                 <div className="text-center mt-2">
@@ -1107,12 +1190,12 @@ function ProfileView() {
         </div>
       </form>
 
-      {isCropOpen && selectedImage && (
+      {cropConfig.isOpen && cropConfig.image && (
         <CropModal
-          image={selectedImage}
-          onClose={() => setIsCropOpen(false)}
+          image={cropConfig.image}
+          onClose={() => setCropConfig(prev => ({ ...prev, isOpen: false, image: null }))}
           onCropComplete={onCropComplete}
-          aspect={1}
+          aspect={cropConfig.aspect}
         />
       )}
     </div>

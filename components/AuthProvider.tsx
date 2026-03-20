@@ -41,6 +41,10 @@ type Profile = {
     state: string;
     notes: string;
     logo_url: string;
+    report_logo_url?: string;
+    primary_color?: string;
+    secondary_color?: string;
+    report_footer?: string;
     plan: string;
   } | null;
 };
