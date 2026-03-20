@@ -1,0 +1,215 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 2, 6, 23;
+  --background-end-rgb: 2, 6, 23;
+  --sidebar-width: 280px;
+}
+
+/* Base styles and transitions */
+@layer base {
+  body {
+    @apply antialiased text-slate-100 bg-navy-950;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Custom Scrollbar Styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-navy-950;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-800 rounded-full border-2 border-navy-950 transition-colors;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-600;
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.slate.800') theme('colors.navy.950');
+  }
+}
+
+@layer components {
+  .dashboard-container {
+    @apply flex h-screen overflow-hidden bg-navy-950 font-sans text-slate-100;
+  }
+  
+  .sidebar-main {
+    width: var(--sidebar-width);
+    @apply bg-navy-950 flex flex-col h-full border-r border-slate-800 shrink-0 transition-all duration-300;
+  }
+
+  /* Mobile: sidebar becomes an overlay */
+  @media (max-width: 768px) {
+    .sidebar-main {
+      @apply fixed inset-y-0 left-0 z-50;
+      transform: translateX(-100%);
+    }
+    .sidebar-main.sidebar-open {
+      transform: translateX(0);
+    }
+    .sidebar-overlay {
+      @apply fixed inset-0 bg-black/60 z-40 backdrop-blur-sm;
+    }
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-left w-full outline-none;
+    @apply text-slate-400 hover:text-white hover:bg-slate-800/50;
+  }
+
+  .nav-item-active {
+    @apply bg-primary-600 text-white font-bold shadow-lg shadow-primary-600/20;
+  }
+
+  .main-content {
+    @apply flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-navy-950/50;
+  }
+
+  .header-dashboard {
+    height: 80px;
+    min-height: 80px;
+    @apply border-b border-slate-800 bg-navy-950/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-20 shrink-0;
+  }
+
+  @media (max-width: 768px) {
+    .header-dashboard {
+      @apply px-4;
+      height: 64px;
+      min-height: 64px;
+    }
+  }
+
+  .btn {
+    @apply inline-block px-6 py-3 rounded-xl font-bold transition-all duration-300 cursor-pointer text-[0.95rem] outline-none text-center;
+  }
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-600/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white active:scale-95;
+  }
+  .card-premium {
+    @apply bg-navy-900 border border-slate-800 rounded-2xl p-6 shadow-sm hover:border-primary-600/50 transition-all duration-300 overflow-hidden;
+  }
+  
+  @media (max-width: 768px) {
+    .card-premium {
+      @apply p-4 rounded-xl;
+    }
+  }
+
+  .badge {
+    @apply px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/10;
+  }
+
+  /* Table styles for dark mode */
+  .table-dashboard {
+    @apply w-full text-left;
+  }
+  .table-header {
+    @apply bg-navy-950/50 text-slate-400 text-xs uppercase font-bold tracking-wider;
+  }
+  .table-row {
+    @apply border-b border-slate-800 hover:bg-slate-800/30 transition-colors;
+  }
+
+  /* Mobile menu toggle button */
+  .mobile-menu-btn {
+    @apply md:hidden h-10 w-10 flex items-center justify-center rounded-xl bg-navy-900 border border-slate-800 text-slate-400 hover:text-primary-600 transition-colors;
+  }
+}
+
+/* Custom Calendar Picker for Dark Mode */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+/* Print Styles */
+@media print {
+  .no-print, 
+  .sidebar-main, 
+  .header-dashboard,
+  button,
+  select,
+  .toast-container {
+    display: none !important;
+  }
+
+  body, .main-content, .dashboard-container {
+    background: white !important;
+    color: black !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .bg-navy-900, .bg-navy-950, [class*="bg-white"] {
+    background-color: transparent !important;
+    border-color: #eee !important;
+    color: black !important;
+  }
+
+  .text-white, .text-slate-300, .text-slate-400 {
+    color: black !important;
+  }
+
+  .text-primary-500 {
+    color: #2563eb !important;
+  }
+
+  .rounded-\[40px\], .rounded-\[32px\], .rounded-3xl {
+    border-radius: 8px !important;
+  }
+
+  .shadow-2xl, .shadow-xl, .shadow-lg {
+    box-shadow: none !important;
+  }
+  
+  /* Ensure the modal content is visible and takes full width */
+  .fixed.inset-0, 
+  .fixed.inset-0 > div {
+    position: relative !important;
+    display: block !important;
+    background: white !important;
+    z-index: auto !important;
+    box-shadow: none !important;
+    width: 100% !important;
+  }
+
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Specific fixes for the redesigned quote */
+  .shadow-sm { box-shadow: none !important; }
+  .border-slate-100 { border-color: #f1f5f9 !important; }
+  .bg-slate-50 { background-color: #f8fafc !important; }
+  .bg-slate-900 { background-color: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bg-primary-600 { background-color: #2563eb !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .text-primary-600 { color: #2563eb !important; }
+  .text-primary-500 { color: #3b82f6 !important; }
+  
+  /* Force colors for print */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
