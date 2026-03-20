@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
@@ -30,6 +31,11 @@ export default function PhotoField({
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
     const [showCropper, setShowCropper] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
     
     // Multiple input refs for "Take Photo" vs "Gallery"
     const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -192,7 +198,7 @@ export default function PhotoField({
             />
 
             {/* Cropper Modal */}
-            {showCropper && imageSrc && (
+            {showCropper && imageSrc && mounted && createPortal(
                 <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/95 backdrop-blur-xl animate-fade-in p-6">
                     <div className="w-full max-w-2xl bg-navy-900 border border-slate-800 rounded-[40px] overflow-hidden shadow-2xl flex flex-col h-[85vh] scale-in">
                         <div className="p-8 border-b border-slate-800/50 flex items-center justify-between bg-navy-950/50 text-left">
@@ -237,7 +243,8 @@ export default function PhotoField({
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
