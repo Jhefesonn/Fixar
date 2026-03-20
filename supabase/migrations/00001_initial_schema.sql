@@ -1,4 +1,4 @@
-﻿-- Migration: 0001_initial_schema.sql
+-- Migration: 0001_initial_schema.sql
 
 -- Migration Final - Fixar RefrigeraÃ§Ã£o
 -- RESET TOTAL: Remove e recria as tabelas para garantir que o cache do Supabase atualize.
@@ -109,6 +109,46 @@ ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'site-assets');
 
+-- 0. Tabela de Organizações (Multi-tenant)
+CREATE TABLE IF NOT EXISTS public.organizations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    owner_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    logo_url TEXT,
+    cnpj TEXT,
+    company_name TEXT,
+    fantasy_name TEXT,
+    phone TEXT,
+    email TEXT,
+    cep TEXT,
+    street TEXT,
+    number TEXT,
+    neighborhood TEXT,
+    city TEXT,
+    state TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own organization" ON public.organizations;
+CREATE POLICY "Users can view their own organization" ON public.organizations
+    FOR SELECT USING (
+        owner_id = auth.uid() OR 
+        id IN (SELECT organization_id FROM public.profiles WHERE profiles.id = auth.uid())
+    );
+
+DROP POLICY IF EXISTS "Admins can update their own organization" ON public.organizations;
+CREATE POLICY "Admins can update their own organization" ON public.organizations
+    FOR UPDATE USING (owner_id = auth.uid());
+
+DROP POLICY IF EXISTS "Allow insertion of organizations" ON public.organizations;
+CREATE POLICY "Allow insertion of organizations" ON public.organizations
+    FOR INSERT WITH CHECK (true);
+
 
 -- Migration: 0002_auth_profiles.sql
 
@@ -119,6 +159,7 @@ USING (bucket_id = 'site-assets');
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT NOT NULL DEFAULT 'client' CHECK (role IN ('admin', 'client')),
+  organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
   full_name TEXT,
   avatar_url TEXT,             -- foto de perfil
   source TEXT,                -- como encontrou (google, facebook, instagram, etc)
@@ -228,7 +269,7 @@ BEGIN
     id, email, full_name, role, must_change_password, avatar_url,
     source, document, whatsapp, cep, street, number,
     complement, neighborhood, city, state, birthday, notes,
-    contacts
+    contacts, organization_id
   )
   VALUES (
     NEW.id,
@@ -253,7 +294,8 @@ BEGIN
     CASE WHEN NEW.raw_user_meta_data->>'birthday' IS NOT NULL AND NEW.raw_user_meta_data->>'birthday' != '' 
       THEN (NEW.raw_user_meta_data->>'birthday')::date ELSE NULL END,
     NEW.raw_user_meta_data->>'notes',
-    COALESCE((NEW.raw_user_meta_data->>'contacts')::jsonb, '[]'::jsonb)
+    COALESCE((NEW.raw_user_meta_data->>'contacts')::jsonb, '[]'::jsonb),
+    (NEW.raw_user_meta_data->>'organization_id')::uuid
   );
   RETURN NEW;
 END;
@@ -1058,3 +1100,34 @@ USING (bucket_id = 'site-assets');
 
 
 
+-- Final Multi-Tenant Fixes (Garantes)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='equipments' AND column_name='organization_id') THEN
+        ALTER TABLE public.equipments ADD COLUMN organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='organization_id') THEN
+        ALTER TABLE public.orders ADD COLUMN organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='financial_records' AND column_name='organization_id') THEN
+        ALTER TABLE public.financial_records ADD COLUMN organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='stock_items' AND column_name='organization_id') THEN
+        ALTER TABLE public.stock_items ADD COLUMN organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='service_items' AND column_name='organization_id') THEN
+        ALTER TABLE public.service_items ADD COLUMN organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='equipment_contracts' AND column_name='organization_id') THEN
+        ALTER TABLE public.equipment_contracts ADD COLUMN organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='maintenance_logs' AND column_name='organization_id') THEN
+        ALTER TABLE public.maintenance_logs ADD COLUMN organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
+    END IF;
+END $$;
