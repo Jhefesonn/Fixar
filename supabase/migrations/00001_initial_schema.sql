@@ -88,26 +88,26 @@ CREATE POLICY "Allow full access to differentiators" ON public.differentiators F
 -- 6. PolÃ­ticas de acesso para o Storage (Imagens)
 -- Nota: Estas polÃ­ticas devem ser aplicadas ao bucket 'site-assets'
 
--- Permitir upload pÃºblico (InserÃ§Ã£o)
-DROP POLICY IF EXISTS "Permitir upload pÃºblico" ON storage.objects;
-CREATE POLICY "Permitir upload pÃºblico"
+-- Permitir upload público (Inserção)
+DROP POLICY IF EXISTS "Permitir upload público" ON storage.objects;
+CREATE POLICY "Permitir upload público"
 ON storage.objects FOR INSERT
 TO public
-WITH CHECK (bucket_id = 'site-assets');
+WITH CHECK (bucket_id IN ('site-assets', 'avatars'));
 
--- Permitir update pÃºblico (AtualizaÃ§Ã£o)
-DROP POLICY IF EXISTS "Permitir update pÃºblico" ON storage.objects;
-CREATE POLICY "Permitir update pÃºblico"
+-- Permitir update público (Atualização)
+DROP POLICY IF EXISTS "Permitir update público" ON storage.objects;
+CREATE POLICY "Permitir update público"
 ON storage.objects FOR UPDATE
 TO public
-USING (bucket_id = 'site-assets');
+USING (bucket_id IN ('site-assets', 'avatars'));
 
--- Permitir visualizaÃ§Ã£o pÃºblica (SeleÃ§Ã£o)
-DROP POLICY IF EXISTS "Permitir visualizaÃ§Ã£o pÃºblica" ON storage.objects;
-CREATE POLICY "Permitir visualizaÃ§Ã£o pÃºblica"
+-- Permitir visualização pública (Seleção)
+DROP POLICY IF EXISTS "Permitir visualização pública" ON storage.objects;
+CREATE POLICY "Permitir visualização pública"
 ON storage.objects FOR SELECT
 TO public
-USING (bucket_id = 'site-assets');
+USING (bucket_id IN ('site-assets', 'avatars'));
 
 -- 0. Tabela de Organizações (Multi-tenant)
 CREATE TABLE IF NOT EXISTS public.organizations (
