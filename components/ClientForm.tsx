@@ -321,23 +321,32 @@ export default function ClientForm({ initialData, onSubmit, onCancel, loading, p
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-4 w-full">
-        <button type="button" onClick={onCancel} className="px-8 py-4 rounded-2xl border border-slate-800 text-slate-400 text-sm font-bold hover:bg-white/[0.02] hover:text-white transition-all shadow-lg active:scale-95 disabled:opacity-50" disabled={loading}>
-          Cancelar
-        </button>
-        <button type="submit" className="px-10 py-4 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-700 text-white text-sm font-black uppercase tracking-widest hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all shadow-xl active:scale-95 disabled:opacity-50 flex items-center gap-3" disabled={loading}>
-          {loading ? (
-            <>
-              <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            <>
-              <span className="material-symbols-outlined text-lg">check</span>
-              {initialData ? 'Atualizar Cliente' : 'Cadastrar Cliente'}
-            </>
-          )}
-        </button>
+        <div className="flex flex-col-reverse md:flex-row items-center md:justify-end gap-3 md:gap-4 w-full">
+          <button 
+            type="button" 
+            onClick={onCancel} 
+            className="w-full md:w-auto px-6 md:px-8 py-3.5 md:py-4 rounded-2xl border border-slate-800 text-slate-400 text-sm font-bold hover:bg-white/[0.02] hover:text-white transition-all shadow-lg active:scale-95 disabled:opacity-50" 
+            disabled={loading}
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            className="w-full md:w-auto px-6 md:px-10 py-3.5 md:py-4 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-700 text-white text-sm font-black uppercase tracking-widest hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all shadow-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-lg">check</span>
+                {initialData ? 'Atualizar Cliente' : 'Cadastrar Cliente'}
+              </>
+            )}
+          </button>
         </div>
       </div>
     </form>
