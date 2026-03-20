@@ -7,13 +7,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Configuração do Supabase incompleta: verifique variáveis de ambiente');
 }
 
-// Evita quebra fatal no momento de build (como no Vercel) caso as chaves estejam com formato errado (sem https://)
-let supabaseClient = {} as ReturnType<typeof createClient>;
-try {
-  if (supabaseUrl && supabaseAnonKey) {
-    supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-  }
-} catch (e) {
-  console.warn('Falha silenciosa ao criar Supabase Client no build:', e);
-}
-export const supabase = supabaseClient;
+// Para o TypeScript não se perder nos tipos (erro never), devemos criar o Client normalmente.
+// No entanto, para não travar o build na Vercel se a URL vier errada/vazia, damos um "fallback" visual seguro vazio.
+const safeUrl = supabaseUrl && supabaseUrl.startsWith('http') ? supabaseUrl : 'https://build.supabase.co';
+const safeKey = supabaseAnonKey || 'build-key';
+
+export const supabase = createClient(safeUrl, safeKey);
