@@ -53,6 +53,7 @@ export async function getContractEquipments() {
 
 export async function getEquipments() {
   try {
+    const { organizationId } = await getOrganizationContext();
     const supabaseAdmin = getSupabaseAdmin();
     const { data, error } = await supabaseAdmin
       .from('equipments')
@@ -60,6 +61,7 @@ export async function getEquipments() {
         *,
         profiles:client_id (full_name)
       `)
+      .eq('organization_id', organizationId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -113,17 +115,21 @@ export async function getEquipmentById(equipmentId: string) {
       `)
       .eq('id', equipmentId)
       .eq('organization_id', organizationId)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     
+    if (!data) {
+      throw new Error(`Equipamento não encontrado ou sem permissão (ID: ${equipmentId})`);
+    }
+
     return {
       ...data,
       client_name: data.profiles ? (data.profiles as any).full_name : 'N/A'
     };
   } catch (err: any) {
-    console.error('Error fetching equipment by id:', err);
-    throw new Error('Falha ao buscar detalhes do equipamento.');
+    console.error('Error fetching equipment by id detalhado:', err);
+    throw new Error(err.message || 'Falha ao buscar detalhes do equipamento.');
   }
 }
 

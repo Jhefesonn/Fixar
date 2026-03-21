@@ -137,6 +137,36 @@ CREATE TABLE IF NOT EXISTS public.organizations (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Tabela para histórico de versões de logos
+CREATE TABLE IF NOT EXISTS public.organization_logos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    type TEXT CHECK (type IN ('original', 'no_bg', 'monochrome', 'dashed')),
+    color TEXT,
+    is_active BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.organization_logos ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins full access to organization_logos" ON public.organization_logos;
+CREATE POLICY "Admins full access to organization_logos" ON public.organization_logos
+    FOR ALL USING (
+        organization_id IN (
+            SELECT id FROM public.organizations WHERE owner_id = auth.uid()
+        )
+    );
+
+DROP POLICY IF EXISTS "Users can view organization_logos" ON public.organization_logos;
+CREATE POLICY "Users can view organization_logos" ON public.organization_logos
+    FOR SELECT USING (
+        organization_id IN (
+            SELECT organization_id FROM public.profiles WHERE profiles.id = auth.uid()
+        )
+    );
+
+
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view their own organization" ON public.organizations;

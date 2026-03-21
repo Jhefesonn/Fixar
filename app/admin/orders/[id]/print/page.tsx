@@ -18,7 +18,7 @@ const workSans = Work_Sans({
 
 export default async function PrintOrderPage({ params }: { params: { id: string } }) {
     const order = await getOrderDetails(params.id);
-    const { data: config } = await supabase.from('site_config').select('logo_url').eq('id', 1).single();
+    const config = order?.organization;
 
     if (!order) {
         return (
@@ -92,17 +92,16 @@ export default async function PrintOrderPage({ params }: { params: { id: string 
                     {/* Header Section */}
                     <div className="flex justify-between items-start mb-6">
                         <div className="space-y-1">
-                            {config?.logo_url ? (
+                            {config?.report_logo_url || config?.logo_url ? (
                                 <img 
-                                    src={config.logo_url} 
+                                    src={config.report_logo_url || config.logo_url} 
                                     alt="Fixar Logo" 
-                                    className="h-14 w-auto object-contain"
-                                    style={{ filter: 'brightness(0) saturate(100%) invert(8%) sepia(35%) saturate(5437%) hue-rotate(203deg) brightness(92%) contrast(107%)' }}
+                                    className="w-auto object-contain transition-all origin-left"
+                                    style={{ height: `${56 * (config?.report_logo_size ? config.report_logo_size / 100 : 1)}px` }}
                                 />
                             ) : (
                                 <div className="text-2xl font-black text-primary italic">FiXAr</div>
                             )}
-                            <div className="text-[0.6rem] font-label uppercase tracking-[0.2em] text-on-surface-variant mt-1">Refrigeração de Precisão</div>
                         </div>
                         <div className="text-right">
                             <div className="bg-surface-container-highest px-4 py-2 rounded-lg">
@@ -242,17 +241,26 @@ export default async function PrintOrderPage({ params }: { params: { id: string 
                 {/* Footer & Signature Section */}
                 <div className="mt-auto">
                     <div className="flex justify-between items-end border-t border-outline-variant/30 pt-8 mt-8">
-                        <div className="max-w-[60%]">
-                            <div className="font-headline font-bold text-on-surface text-base">Fixar Refrigeração</div>
-                            <div className="mt-3 space-y-1">
-                                <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                                    <span className="material-symbols-outlined text-sm">call</span> (11) 99999-9999
+                        <div className="max-w-[70%]">
+                            <div className="font-headline font-bold text-slate-800 text-[17px]">Fixar refrigeração</div>
+                            <div className="mt-3 space-y-1.5">
+                                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                    <div className="w-5 h-5 rounded-md bg-primary-50 flex items-center justify-center text-primary-600">
+                                        <span className="material-symbols-outlined text-[12px]">call</span>
+                                    </div>
+                                    (11) 99999-9999
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                                    <span className="material-symbols-outlined text-sm">mail</span> contato@fixar.com.br
+                                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                    <div className="w-5 h-5 rounded-md bg-primary-50 flex items-center justify-center text-primary-600">
+                                        <span className="material-symbols-outlined text-[12px]">mail</span>
+                                    </div>
+                                    contato@fixar.com.br
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                                    <span className="material-symbols-outlined text-sm">corporate_fare</span> CNPJ: 00.000.000/0001-00
+                                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                                    <div className="w-5 h-5 rounded-md bg-primary-50 flex items-center justify-center text-primary-600">
+                                        <span className="material-symbols-outlined text-[12px]">corporate_fare</span>
+                                    </div>
+                                    CNPJ: 00.000.000/0001-00
                                 </div>
                             </div>
                         </div>

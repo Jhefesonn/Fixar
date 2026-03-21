@@ -25,11 +25,12 @@ function ClientDashboard() {
 
   useEffect(() => {
     const fetchConfig = async () => {
-      const { data } = await supabase.from('site_config').select('logo_url').eq('id', 1).single();
+      if (!profile?.organization_id) return;
+      const { data } = await supabase.from('organizations').select('logo_url').eq('id', profile.organization_id).single();
       if (data) setSiteConfig(data);
     };
-    fetchConfig();
-  }, []);
+    if (profile?.organization_id) fetchConfig();
+  }, [profile?.organization_id]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -84,6 +85,9 @@ function ClientDashboard() {
     await signOut();
   };
 
+  // @ts-ignore
+  const logoScale = profile?.organizations?.logo_size ? profile.organizations.logo_size / 100 : 1;
+
   return (
     <div className="dashboard-container">
       {/* Mobile Sidebar Overlay */}
@@ -97,7 +101,12 @@ function ClientDashboard() {
             {siteConfig === null ? (
               <span className="h-10" />
             ) : siteConfig.logo_url ? (
-              <img src={siteConfig.logo_url} alt="Fixar Logo" className="h-10 w-auto object-contain" />
+              <img 
+                src={siteConfig.logo_url} 
+                alt="Fixar Logo" 
+                className="w-auto object-contain transition-all origin-left" 
+                style={{ height: `${40 * logoScale}px` }} 
+              />
             ) : (
               <>
                 <span className="material-symbols-outlined text-3xl">ac_unit</span>

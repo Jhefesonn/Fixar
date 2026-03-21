@@ -43,7 +43,8 @@ export async function getOrderDetails(orderId: string) {
             client:profiles!client_id(id, full_name, whatsapp, document, avatar_url, contacts, cep, street, number, complement, neighborhood, city, state),
             equipment:equipments(id, name, tag),
             services:order_services(*),
-            parts:order_parts(*)
+            parts:order_parts(*),
+            organization:organizations(logo_url, report_logo_url, logo_size, report_logo_size)
         `)
         .eq('id', orderId)
         .eq('organization_id', organizationId)

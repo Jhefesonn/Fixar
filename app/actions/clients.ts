@@ -168,19 +168,14 @@ export async function getInviteOrgDetails(orgId: string) {
   }
 
   try {
-    if (!logoUrl) {
-      const { data: site } = await supabaseAdmin.from('site_config').select('logo_url').eq('id', 1).maybeSingle();
-      if (site?.logo_url) {
-         logoUrl = site.logo_url;
-      } else if (ownerId) {
-         const { data: profile } = await supabaseAdmin.from('profiles').select('avatar_url').eq('id', ownerId).maybeSingle();
-         if (profile?.avatar_url) {
-             logoUrl = profile.avatar_url;
-         }
-      }
+    if (!logoUrl && ownerId) {
+       const { data: profile } = await supabaseAdmin.from('profiles').select('avatar_url').eq('id', ownerId).maybeSingle();
+       if (profile?.avatar_url) {
+           logoUrl = profile.avatar_url;
+       }
     }
   } catch (err) {
-    console.error('Error fetching site_config logo:', err);
+    console.error('Error fetching org owner logo fallback:', err);
   }
 
   return { name: orgName, logoUrl };

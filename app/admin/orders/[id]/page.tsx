@@ -31,38 +31,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [availableContacts, setAvailableContacts] = useState<any[]>([]);
-    const [processedLogo, setProcessedLogo] = useState<string | null>(null);
 
-    // Process logo for PDF (ensure solid color and CORS-friendly)
-    useEffect(() => {
-        if (!config?.logo_url) return;
-
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = config.logo_url;
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            // Fill with Navy Blue (#003f87)
-            ctx.fillStyle = '#003f87';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Use mask to keep only the logo shape
-            ctx.globalCompositeOperation = 'destination-in';
-            ctx.drawImage(img, 0, 0);
-
-            setProcessedLogo(canvas.toDataURL());
-        };
-        img.onerror = () => {
-            // Fallback to original if CORS fails or other error
-            setProcessedLogo(config.logo_url);
-        };
-    }, [config?.logo_url]);
 
     useEffect(() => {
         const isEdit = typeof window !== 'undefined' && window.location.search.includes('edit=true');
@@ -203,16 +172,17 @@ Ficamos à disposição!`;
         setLoading(true);
         try {
             console.log('Carregando pedido com ID:', id);
-            const [orderData, { data: configData }] = await Promise.all([
-                getOrderDetails(id),
-                supabase.from('site_config').select('logo_url').eq('id', 1).single()
-            ]);
+            const orderData = await getOrderDetails(id);
             console.log('Resultado getOrderDetails:', orderData);
             if (!orderData) {
                 console.error('Pedido não retornado pelo getOrderDetails');
             }
             setOrder(orderData);
-            setConfig(configData);
+            
+            // Set config from order's organization
+            if (orderData?.organization) {
+                setConfig(orderData.organization);
+            }
         } catch (err: any) {
             console.error('Error loading order:', err);
             showToast('Erro ao carregar dados: ' + err.message, 'error');
@@ -472,19 +442,18 @@ Ficamos à disposição!`;
                         {/* Header Section */}
                         <div className="flex justify-between items-start mb-2 page-break-avoid">
                             <div className="space-y-1">
-                                {config?.logo_url ? (
+                                {config?.report_logo_url || config?.logo_url ? (
                                     <img
-                                        src={processedLogo || config.logo_url}
+                                        src={config.report_logo_url || config.logo_url}
                                         alt="Logo Fixar"
-                                        className="h-12 w-auto object-contain"
-                                        style={!processedLogo ? { filter: 'brightness(0) saturate(100%) invert(18%) sepia(85%) saturate(1400%) hue-rotate(195deg) brightness(90%) contrast(110%)' } : {}}
+                                        className="w-auto object-contain transition-all origin-left"
+                                        style={{ height: `${48 * (config?.report_logo_size ? config.report_logo_size / 100 : 1)}px` }}
                                     />
                                 ) : (
                                     <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                         <span className="material-symbols-outlined text-3xl">ac_unit</span>
                                     </div>
                                 )}
-                                <div className="text-[0.6rem] font-label uppercase tracking-[0.2em] text-on-surface-variant mt-1">(43) 98805-3145</div>
                             </div>
                             <div className="text-right">
                                 <div className="bg-surface-container-highest px-4 py-2 rounded-lg">
@@ -634,17 +603,26 @@ Ficamos à disposição!`;
                     {/* Footer & Signature Section */}
                     <div className="mt-2 md:mt-8 text-on-surface page-break-avoid">
                         <div className="flex justify-between items-end border-t border-outline-variant/30 pt-2">
-                            <div className="max-w-[60%]">
-                                <div className="font-headline font-bold text-on-surface text-sm">FiXAr Refrigeração</div>
-                                <div className="mt-2 space-y-1">
-                                    <div className="flex items-center gap-2 text-[0.65rem] text-on-surface-variant font-medium">
-                                        <span className="material-symbols-outlined text-[10px] text-primary">call</span> (43) 98805-3145
+                            <div className="max-w-[70%]">
+                                <div className="font-headline font-bold text-slate-800 text-[15px]">Fixar refrigeração</div>
+                                <div className="mt-2 space-y-1.5">
+                                    <div className="flex items-center gap-2 text-[0.65rem] text-slate-500 font-medium">
+                                        <div className="w-4 h-4 rounded-md bg-primary-50 flex items-center justify-center text-primary-600">
+                                            <span className="material-symbols-outlined text-[10px]">call</span>
+                                        </div>
+                                        (43) 98805-3145
                                     </div>
-                                    <div className="flex items-center gap-2 text-[0.65rem] text-on-surface-variant font-medium">
-                                        <span className="material-symbols-outlined text-[10px] text-primary">mail</span> fixar.tec@hotmail.com
+                                    <div className="flex items-center gap-2 text-[0.65rem] text-slate-500 font-medium">
+                                        <div className="w-4 h-4 rounded-md bg-primary-50 flex items-center justify-center text-primary-600">
+                                            <span className="material-symbols-outlined text-[10px]">mail</span>
+                                        </div>
+                                        fixar.tec@hotmail.com
                                     </div>
-                                    <div className="flex items-center gap-2 text-[0.65rem] text-on-surface-variant font-medium">
-                                        <span className="material-symbols-outlined text-[10px] text-primary">corporate_fare</span> Arapongas - PR | CNPJ: 59.509.239/0001-34
+                                    <div className="flex items-center gap-2 text-[0.65rem] text-slate-500 font-medium">
+                                        <div className="w-4 h-4 rounded-md bg-primary-50 flex items-center justify-center text-primary-600">
+                                            <span className="material-symbols-outlined text-[10px]">corporate_fare</span>
+                                        </div>
+                                        Arapongas - PR | CNPJ: 59.509.239/0001-34
                                     </div>
                                 </div>
                             </div>

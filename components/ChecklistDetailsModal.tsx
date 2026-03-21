@@ -39,6 +39,7 @@ const CHECKLIST_LABELS: Record<string, string> = {
 
 export default function ChecklistDetailsModal({ isOpen, onClose, log, equipment }: ChecklistDetailsModalProps) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoScale, setLogoScale] = useState<number>(1);
   const [technicianName, setTechnicianName] = useState('Equipe Técnica Fixar');
   const [technicianDocument, setTechnicianDocument] = useState('');
   const [technicianId, setTechnicianId] = useState('');
@@ -54,8 +55,14 @@ export default function ChecklistDetailsModal({ isOpen, onClose, log, equipment 
   }, [isOpen, log]);
 
   const fetchLogo = async () => {
-    const { data } = await supabase.from('site_config').select('logo_url').eq('id', 1).single();
-    if (data) setLogoUrl(data.logo_url);
+    if (!log?.organization_id) return;
+    // @ts-ignore
+    const { data } = await supabase.from('organizations').select('logo_url, report_logo_url, report_logo_size').eq('id', log.organization_id).single();
+    if (data) {
+      setLogoUrl(data.report_logo_url || data.logo_url);
+      // @ts-ignore
+      setLogoScale(data.report_logo_size ? data.report_logo_size / 100 : 1);
+    }
   };
 
   if (!isOpen || !log) return null;
@@ -112,8 +119,8 @@ export default function ChecklistDetailsModal({ isOpen, onClose, log, equipment 
                 <img 
                   src={logoUrl} 
                   alt="Logo" 
-                  className="h-10 w-auto object-contain print:h-12" 
-                  style={{ filter: 'brightness(0) saturate(100%) invert(8%) sepia(35%) saturate(5437%) hue-rotate(203deg) brightness(92%) contrast(107%)' }}
+                  className="w-auto object-contain transition-all origin-right" 
+                  style={{ height: `${48 * logoScale}px` }}
                 />
               ) : (
                 <span className="text-[#001a40] text-3xl font-black italic uppercase tracking-tight">FiXAr</span>
