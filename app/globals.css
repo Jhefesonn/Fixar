@@ -144,76 +144,31 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
-/* Print Styles */
-@media print {
-  .no-print, 
-  .sidebar-main, 
-  .header-dashboard,
-  button,
-  select,
-  .toast-container {
-    display: none !important;
-  }
-
-  body, .main-content, .dashboard-container {
-    background: white !important;
-    color: black !important;
-    height: auto !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  .bg-navy-900, .bg-navy-950, [class*="bg-white"] {
-    background-color: transparent !important;
-    border-color: #eee !important;
-    color: black !important;
-  }
-
-  .text-white, .text-slate-300, .text-slate-400 {
-    color: black !important;
-  }
-
-  .text-primary-500 {
-    color: #2563eb !important;
-  }
-
-  .rounded-\[40px\], .rounded-\[32px\], .rounded-3xl {
-    border-radius: 8px !important;
-  }
-
-  .shadow-2xl, .shadow-xl, .shadow-lg {
-    box-shadow: none !important;
-  }
-  
-  /* Ensure the modal content is visible and takes full width */
-  .fixed.inset-0, 
-  .fixed.inset-0 > div {
-    position: relative !important;
-    display: block !important;
-    background: white !important;
-    z-index: auto !important;
-    box-shadow: none !important;
-    width: 100% !important;
-  }
-
-
-  .print-only {
-    display: block !important;
-  }
-
-  /* Specific fixes for the redesigned quote */
-  .shadow-sm { box-shadow: none !important; }
-  .border-slate-100 { border-color: #f1f5f9 !important; }
-  .bg-slate-50 { background-color: #f8fafc !important; }
-  .bg-slate-900 { background-color: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .bg-primary-600 { background-color: #2563eb !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .text-primary-600 { color: #2563eb !important; }
-  .text-primary-500 { color: #3b82f6 !important; }
-  
-  /* Force colors for print */
-  * {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
+/* PDF Report — white theme for html2canvas capture */
+.pdf-report-container {
+  width: 794px;
+  background: white;
+  padding: 0;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: -9999px;
+  display: block;
 }
+
+.pdf-page {
+  width: 794px;
+  background: white;
+  padding: 0;
+  margin: 0 auto;
+  box-sizing: border-box;
+  position: relative;
+  overflow: visible;
+}
+
+.pdf-inner {
+  padding: 30px 50px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+

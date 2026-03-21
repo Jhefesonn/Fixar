@@ -306,6 +306,79 @@ export async function getContracts() {
   }
 }
 
+export async function getContractById(contractId: string) {
+  try {
+    const { organizationId } = await getOrganizationContext();
+    const supabaseAdmin = getSupabaseAdmin();
+    const { data, error } = await supabaseAdmin
+      .from('equipment_contracts')
+      .select(`
+        *,
+        client:profiles!client_id(*),
+        equipments:contract_equipments(
+          equipment:equipments(
+            *,
+            maintenance_logs(*)
+          )
+        ),
+        organization:organizations(*)
+      `)
+      .eq('id', contractId)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new Error('Contrato não encontrado.');
+    
+    return {
+      ...data,
+      client_name: data.client ? (data.client as any).full_name : 'N/A',
+      equipment_list: data.equipments?.map((e: any) => {
+        let status = 'not_done';
+        
+        if (e.equipment.maintenance_logs && e.equipment.maintenance_logs.length > 0) {
+          // get the latest log for this contract
+          const logsForContract = e.equipment.maintenance_logs
+            .filter((log: any) => log.contract_id === contractId)
+            .sort((a: any, b: any) => new Date(b.performed_at).getTime() - new Date(a.performed_at).getTime());
+          
+          if (logsForContract.length > 0) {
+            const lastLog = logsForContract[0];
+            const lastPerformedAt = new Date(lastLog.performed_at);
+            
+            let monthsToAdd = 1;
+            switch (data.periodicity) {
+              case 'monthly': monthsToAdd = 1; break;
+              case 'bimonthly': monthsToAdd = 2; break;
+              case 'quarterly': monthsToAdd = 3; break;
+              case 'semiannual': monthsToAdd = 6; break;
+              case 'annual': monthsToAdd = 12; break;
+              default: monthsToAdd = 1;
+            }
+            
+            const validUntil = new Date(lastPerformedAt);
+            validUntil.setMonth(validUntil.getMonth() + monthsToAdd);
+            
+            if (new Date() > validUntil) {
+              status = 'pending';
+            } else {
+              status = 'ok';
+            }
+          }
+        }
+        
+        return {
+          ...e.equipment,
+          checklist_status: status
+        };
+      }) || []
+    };
+  } catch (err: any) {
+    console.error('Error fetching contract by id:', err);
+    throw new Error(err.message || 'Falha ao buscar detalhes do contrato.');
+  }
+}
+
 export async function getEquipmentContracts(equipmentId: string) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
@@ -510,7 +583,8 @@ export async function saveMaintenanceChecklist(
   checklistStructure?: any,
   technicianName: string = 'Equipe Técnica Fixar',
   technicianId?: string,
-  technicianDocument?: string
+  technicianDocument?: string,
+  logId?: string
 ) {
   const finalTechId = (technicianId && technicianId.trim() !== '') ? technicianId : null;
 
@@ -555,22 +629,34 @@ export async function saveMaintenanceChecklist(
       contract = link?.contract;
     }
 
-    // 2. Insert log
-    const { error: logError } = await supabaseAdmin
-      .from('maintenance_logs')
-      .insert({
-        organization_id: organizationId,
-        equipment_id: equipmentId,
-        contract_id: contract?.id || null,
-        checklist_data: checklistData,
-        notes: notes,
-        technician_name: technicianName,
-        technician_id: finalTechId,
-        technician_document: technicianDocument || null,
-        performed_at: new Date().toISOString()
-      });
-      
-    if (logError) throw logError;
+    // 2. Insert or Update log
+    const logData = {
+      organization_id: organizationId,
+      equipment_id: equipmentId,
+      contract_id: contract?.id || null,
+      checklist_data: checklistData,
+      notes: notes,
+      technician_name: technicianName,
+      technician_id: finalTechId,
+      technician_document: technicianDocument || null
+    };
+
+    if (logId) {
+      const { error: logError } = await supabaseAdmin
+        .from('maintenance_logs')
+        .update(logData)
+        .eq('id', logId)
+        .eq('organization_id', organizationId);
+      if (logError) throw logError;
+    } else {
+      const { error: logError } = await supabaseAdmin
+        .from('maintenance_logs')
+        .insert({
+          ...logData,
+          performed_at: new Date().toISOString()
+        });
+      if (logError) throw logError;
+    }
     
     if (contract) {
       // 3. Calculate next visit

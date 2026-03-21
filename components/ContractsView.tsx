@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { getContracts, saveContract, adminDeleteContract } from '@/app/actions/equipments';
 import ContractFormModal from './ContractFormModal';
+import ContractDetailsModal from './ContractDetailsModal';
 
 interface ContractsViewProps {
   externalSearch?: string;
@@ -18,6 +19,8 @@ export default function ContractsView({ externalSearch = '' }: ContractsViewProp
   const [contractToDelete, setContractToDelete] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -129,7 +132,12 @@ export default function ContractsView({ externalSearch = '' }: ContractsViewProp
                     <tr key={contract.id} className="hover:bg-white/[0.015] transition-colors group/row text-white">
                       <td className="px-6 py-5">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-white group-hover/row:text-primary-600 transition-colors">{contract.name}</span>
+                          <button 
+                            onClick={() => { setSelectedContractId(contract.id); setIsDetailsModalOpen(true); }}
+                            className="text-left text-sm font-bold text-white hover:text-primary-400 transition-colors cursor-pointer group-hover/row:text-primary-600 outline-none"
+                          >
+                            {contract.name}
+                          </button>
                           <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest">{contract.type}</span>
                         </div>
                       </td>
@@ -186,7 +194,12 @@ export default function ContractsView({ externalSearch = '' }: ContractsViewProp
                 <div key={contract.id} className="p-5 flex flex-col gap-4">
                   <div className="flex justify-between items-start">
                     <div className="flex flex-col min-w-0">
-                      <span className="text-base font-bold text-white truncate">{contract.name}</span>
+                      <button 
+                        onClick={() => { setSelectedContractId(contract.id); setIsDetailsModalOpen(true); }}
+                        className="text-left text-base font-bold text-white truncate hover:text-primary-400 transition-colors outline-none"
+                      >
+                        {contract.name}
+                      </button>
                       <span className="text-[10px] font-black text-primary-600 uppercase tracking-widest">{contract.type}</span>
                     </div>
                     <span className="text-sm font-black text-emerald-500 shrink-0">
@@ -231,6 +244,12 @@ export default function ContractsView({ externalSearch = '' }: ContractsViewProp
         onSubmit={handleSaveContract}
         initialData={contractToEdit}
         loading={saving}
+      />
+
+      <ContractDetailsModal 
+        isOpen={isDetailsModalOpen}
+        contractId={selectedContractId}
+        onClose={() => { setIsDetailsModalOpen(false); setSelectedContractId(null); }}
       />
 
       {/* Modal Excluir Contrato */}

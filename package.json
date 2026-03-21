@@ -15,7 +15,9 @@
     "@tailwindcss/postcss": "^4.2.1",
     "clsx": "latest",
     "date-fns": "^4.1.0",
+    "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
+    "jspdf": "^4.2.1",
     "lucide-react": "latest",
     "next": "^16.1.7",
     "react": "^19.2.4",
@@ -24,6 +26,7 @@
     "tailwind-merge": "latest"
   },
   "devDependencies": {
+    "@types/html2canvas": "^0.5.35",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",

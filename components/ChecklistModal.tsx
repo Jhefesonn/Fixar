@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import PhotoField from './shared/PhotoField';
+import React, { useState, useEffect, useRef } from 'react';
+import PhotoField, { PhotoFieldHandle } from './shared/PhotoField';
 import { getTechnicians, upsertTechnician } from '@/app/actions/equipments';
 
 interface ChecklistModalProps {
@@ -58,6 +58,7 @@ export default function ChecklistModal({
   const [newTechDoc, setNewTechDoc] = useState('');
   const [loadingTechs, setLoadingTechs] = useState(true);
   const lastAddedId = React.useRef<string | null>(null);
+  const photoRefs = useRef<Record<string, PhotoFieldHandle | null>>({});
 
   // Load technicians
   useEffect(() => {
@@ -264,9 +265,31 @@ export default function ChecklistModal({
             />
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {itemData.checked && (
-              <span className="text-[9px] font-black uppercase text-emerald-500 tracking-widest animate-fade-in hidden sm:inline">Ok</span>
+              <>
+                {!itemData.photo_url && (
+                  <div className="flex items-center gap-1 mr-2 animate-fade-in">
+                    <button 
+                      type="button"
+                      onClick={() => photoRefs.current[item.id]?.openCamera()}
+                      className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-emerald-500/10 text-slate-500 hover:text-emerald-500 transition-all"
+                      title="Tirar Foto"
+                    >
+                      <span className="material-symbols-outlined text-lg">photo_camera</span>
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => photoRefs.current[item.id]?.openGallery()}
+                      className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-700/30 text-slate-500 hover:text-white transition-all"
+                      title="Abrir Galeria"
+                    >
+                      <span className="material-symbols-outlined text-lg">image</span>
+                    </button>
+                  </div>
+                )}
+                <span className="text-[9px] font-black uppercase text-emerald-500 tracking-widest animate-fade-in hidden sm:inline mr-2">Ok</span>
+              </>
             )}
             <button 
                 type="button"
@@ -283,6 +306,7 @@ export default function ChecklistModal({
         <div className={`transition-all duration-300 overflow-hidden ${itemData.checked ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
            <div className="pt-2 space-y-4">
               <PhotoField 
+                ref={el => { photoRefs.current[item.id] = el; }}
                 value={itemData.photo_url || ''} 
                 onUpload={(url) => setItemPhoto(item.id, url)}
                 folder="checklists"
@@ -310,7 +334,7 @@ export default function ChecklistModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
       <div className="bg-navy-900 border border-slate-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header */}
         <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-navy-950/50">

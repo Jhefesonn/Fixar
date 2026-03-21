@@ -142,7 +142,7 @@ export default function ContractFormModal({ isOpen, onClose, onSubmit, loading, 
   const labelClass = "block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1 text-left";
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-[260] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
       <div className="bg-navy-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col shadow-2xl scale-in">
         <div className="p-8 border-b border-slate-800/50 flex items-center justify-between bg-navy-950/50 shrink-0">
           <div className="flex items-center gap-3">

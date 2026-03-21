@@ -16,7 +16,12 @@ interface PhotoFieldProps {
     icon?: string;
 }
 
-export default function PhotoField({ 
+export interface PhotoFieldHandle {
+    openCamera: () => void;
+    openGallery: () => void;
+}
+
+const PhotoField = React.forwardRef<PhotoFieldHandle, PhotoFieldProps>(({ 
     value, 
     onUpload, 
     folder, 
@@ -24,7 +29,7 @@ export default function PhotoField({
     aspect = 1, 
     shape = 'rect',
     icon = 'photo_camera'
-}: PhotoFieldProps) {
+}, ref) => {
     const [uploading, setUploading] = useState(false);
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
@@ -40,6 +45,11 @@ export default function PhotoField({
     // Multiple input refs for "Take Photo" vs "Gallery"
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
+
+    React.useImperativeHandle(ref, () => ({
+        openCamera: () => cameraInputRef.current?.click(),
+        openGallery: () => galleryInputRef.current?.click()
+    }));
 
     const onCropComplete = useCallback((_extended: Area, croppedPixels: Area) => {
         setCroppedAreaPixels(croppedPixels);
@@ -113,70 +123,76 @@ export default function PhotoField({
         }
     };
 
-    return (
-        <div className="flex flex-col items-center justify-center gap-6 py-10 bg-navy-950/30 rounded-[40px] border border-slate-800/50 relative overflow-hidden group/photo w-full">
-            {/* Background glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-primary-600/10 blur-[80px] rounded-full group-hover/photo:bg-primary-600/20 transition-all duration-700" />
-            
-            <div className="relative z-10 w-full px-6 flex flex-col items-center">
-                <div className={`mx-auto ${aspect === 1 ? 'aspect-square w-40 md:w-44 rounded-[40px]' : 'aspect-video w-full max-w-[16rem] rounded-3xl'} border-4 border-slate-800 overflow-hidden bg-navy-900 flex items-center justify-center shadow-2xl relative group/img-container hover:border-primary-600/30 transition-all duration-500`}>
-                    {value ? (
-                        <img src={value} alt={label} className="h-full w-full object-cover" />
-                    ) : (
-                        <div className="flex flex-col items-center gap-3 text-slate-700 group-hover/img-container:text-primary-600/50 transition-colors">
-                            <span className="material-symbols-outlined text-5xl">{icon}</span>
-                        </div>
-                    )}
+    const renderMainUI = () => {
+        if (!value && !uploading) return null;
+
+        return (
+            <div className={`flex flex-col items-center justify-center gap-6 py-10 bg-navy-950/30 rounded-[40px] border border-slate-800/50 relative overflow-hidden group/photo w-full transition-all duration-500`}>
+                {/* Background glow */}
+                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-primary-600/10 blur-[80px] rounded-full group-hover/photo:bg-primary-600/20 transition-all duration-700`} />
+                
+                <div className="relative z-10 w-full px-6 flex flex-col items-center">
+                    <div className={`mx-auto ${aspect === 1 ? 'aspect-square w-40 md:w-44 rounded-[40px]' : 'aspect-video w-full max-w-[16rem] rounded-3xl'} border-4 border-slate-800 overflow-hidden bg-navy-900 flex items-center justify-center shadow-2xl relative group/img-container hover:border-primary-600/30 transition-all duration-500 animate-fade-in`}>
+                        {value && <img src={value} alt={label} className="h-full w-full object-cover" />}
+                        
+                        {/* Hover Overlay */}
+                        {!uploading && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover/img-container:opacity-100 transition-all duration-300 backdrop-blur-[2px] gap-3">
+                                <button 
+                                    type="button"
+                                    onClick={() => cameraInputRef.current?.click()}
+                                    className="h-12 w-12 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-lg transform translate-y-4 group-hover/img-container:translate-y-0 transition-all duration-500"
+                                    title="Tirar Foto"
+                                >
+                                    <span className="material-symbols-outlined text-xl">photo_camera</span>
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={() => galleryInputRef.current?.click()}
+                                    className="h-10 w-10 rounded-xl bg-slate-800 text-white flex items-center justify-center shadow-lg transform translate-y-4 group-hover/img-container:translate-y-0 transition-all duration-500 delay-75"
+                                    title="Escolher da Galeria"
+                                >
+                                    <span className="material-symbols-outlined text-xl">image</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {uploading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                                <div className="h-10 w-10 border-[3px] border-primary-600/20 border-t-primary-600 rounded-full animate-spin" />
+                            </div>
+                        )}
+                    </div>
                     
-                    {/* Hover Overlay - Only for Desktop if preferred, but we'll use it as central picker */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover/img-container:opacity-100 transition-all duration-300 backdrop-blur-[2px] gap-3">
-                         <button 
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-6 animate-fade-in">{label}</p>
+                    
+                    {/* Mobile Specific Buttons (Visible below the preview when having a photo) */}
+                    <div className="flex items-center justify-center gap-3 mt-4 md:hidden animate-fade-in">
+                        <button 
                             type="button"
                             onClick={() => cameraInputRef.current?.click()}
-                            className="h-12 w-12 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-lg transform translate-y-4 group-hover/img-container:translate-y-0 transition-all duration-500"
-                            title="Tirar Foto"
+                            className="flex items-center gap-2 px-4 py-2 bg-navy-900 border border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
                         >
-                            <span className="material-symbols-outlined text-xl">photo_camera</span>
+                            <span className="material-symbols-outlined text-sm">photo_camera</span>
+                            Trocar
                         </button>
                         <button 
                             type="button"
                             onClick={() => galleryInputRef.current?.click()}
-                            className="h-10 w-10 rounded-xl bg-slate-800 text-white flex items-center justify-center shadow-lg transform translate-y-4 group-hover/img-container:translate-y-0 transition-all duration-500 delay-75"
-                            title="Escolher da Galeria"
+                            className="flex items-center gap-2 px-4 py-2 bg-navy-900 border border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
                         >
-                            <span className="material-symbols-outlined text-xl">image</span>
+                            <span className="material-symbols-outlined text-sm">image</span>
+                            Galeria
                         </button>
                     </div>
-
-                    {uploading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                            <div className="h-10 w-10 border-[3px] border-primary-600/20 border-t-primary-600 rounded-full animate-spin" />
-                        </div>
-                    )}
-                </div>
-                
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-6">{label}</p>
-                
-                {/* Mobile Specific Buttons (Visible below the preview) */}
-                <div className="flex items-center justify-center gap-3 mt-4 md:hidden">
-                    <button 
-                        type="button"
-                        onClick={() => cameraInputRef.current?.click()}
-                        className="flex items-center gap-2 px-4 py-2 bg-navy-900 border border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
-                    >
-                        <span className="material-symbols-outlined text-sm">photo_camera</span>
-                        Câmera
-                    </button>
-                    <button 
-                        type="button"
-                        onClick={() => galleryInputRef.current?.click()}
-                        className="flex items-center gap-2 px-4 py-2 bg-navy-900 border border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
-                    >
-                        <span className="material-symbols-outlined text-sm">image</span>
-                        Galeria
-                    </button>
                 </div>
             </div>
+        );
+    };
+
+    return (
+        <>
+            {renderMainUI()}
 
             {/* Hidden Inputs */}
             <input 
@@ -246,6 +262,10 @@ export default function PhotoField({
                 </div>,
                 document.body
             )}
-        </div>
+        </>
     );
-}
+});
+
+PhotoField.displayName = 'PhotoField';
+
+export default PhotoField;
